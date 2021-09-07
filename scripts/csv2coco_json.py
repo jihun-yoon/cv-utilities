@@ -1,22 +1,22 @@
 import pandas as pd  # pylint: disable=C0114
-from utils.json_handler import dump_json
+from .utils.json_handler import dump_json
 
 
-def table_to_coco_json(coco_info,
-                       coco_licenses,
-                       coco_df=None,
-                       csv_fpath=None,
-                       save_fpath=None):
-    """Generate COCO style json from Pandas.DataFrame
+def csv2coco_json(coco_info,
+                  coco_licenses,
+                  coco_df=None,
+                  csv_fpath=None,
+                  save_fpath=None):
+    """Generate COCO style json from csv(Pandas.DataFrame)
 
-    Annotation Data Columns:
+    Csv columns:
         image_id (int)
         width (int)
         height (int)
         file_name (str)
-        license (int)
-        #flickr_url # TODO: 삭제
-        #coco_url # TODO: 삭제
+        license_id (int)
+        #flickr_url # TODO: delete
+        #coco_url # TODO: delete
         date_captured (datetime)
         ann_id (int)
         segmentation ([polygon])
@@ -31,17 +31,19 @@ def table_to_coco_json(coco_info,
         coco_df (Pandas.DataFrame): annotation in Pandas.DataFrame of annota
         info (dict): COCO style information of the annotation
         licenses (list): COCO style lincenses of the annotation
-        csv_fpath (str, optional): path of annotation csv file . Defaults to None.
-        save_fpath (str, optional): [description]. Defaults to None.
+        csv_fpath (:None:`str`, optional): path of annotation csv file
+            where to load. Defaults to None.
+        save_fpath (:None:`str`, optional): path of annotation json file
+            where to save. Defaults to None.
 
     Returns:
         dict: COCO style json
     """
-    if coco_df is None and csv_fpath is None:
-        # TODO: assert 추가하기
-        return
+    assert coco_df is not None or csv_fpath is not None, \
+        "Either of coco_df and csv_fpath must not be none."
     if csv_fpath is not None:
         coco_df = pd.read_csv(csv_fpath)
+    print(coco_df.columns)
 
     coco_df.astype({
         "image_id": "int32",
@@ -51,11 +53,13 @@ def table_to_coco_json(coco_info,
         "license_id": "int32",
         "date_captured": "str",
         "ann_id": "int32",
-        "category_id": "int32",
         "segmentation": "str",
         "area": "float64",
         "bbox": "str",
-        "iscrowd": "int32"
+        "iscrowd": "int32",
+        "category_id": "int32",
+        "category_name": "str",
+        "supercategory": "str"
     })
     # TODO: get rid of eval()
     coco_df["segmentation"] = coco_df["segmentation"].apply(lambda x: eval(x))  # pylint: disable=W0108
@@ -66,7 +70,11 @@ def table_to_coco_json(coco_info,
         "date_captured"
     ]].copy()
     image_coco_df = image_coco_df.sort_values(["image_id"])
-    image_coco_df.rename({"image_id": "id", "license_id": "license"})
+    image_coco_df = image_coco_df.rename(columns={
+        "image_id": "id",
+        "license_id": "license"
+    })
+
     images = list(image_coco_df.to_dict("index").values())
 
     ann_coco_df = coco_df[[
@@ -74,12 +82,19 @@ def table_to_coco_json(coco_info,
         "iscrowd"
     ]].copy()
     ann_coco_df = ann_coco_df.sort_values("ann_id")
-    ann_coco_df = ann_coco_df.rename({"ann_id": "id"})
+    ann_coco_df = ann_coco_df.rename(columns={"ann_id": "id"})
     annotations = list(ann_coco_df.to_dict("index").values())
 
-    category_coco_df = coco_df.drop_duplicates(
+    category_coco_df = coco_df[[
+        "category_id", "category_name", "supercategory"
+    ]].copy()
+    category_coco_df = category_coco_df.drop_duplicates(
         ["category_id", "category_name", "supercategory"])
     category_coco_df = category_coco_df.sort_values(["category_id"])
+    category_coco_df = category_coco_df.rename(columns={
+        "category_id": "id",
+        "category_name": "name"
+    })
     categories = list(category_coco_df.to_dict("index").values())
 
     coco_format = {
@@ -99,4 +114,4 @@ if __name__ == "__main__":
     info = {}
     licenses = []
 
-    table_to_coco_json(info, licenses, csv_fpath="", save_fpath="")
+    csv2coco_json(info, licenses, csv_fpath="", save_fpath="")
