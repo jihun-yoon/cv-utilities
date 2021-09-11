@@ -1,22 +1,15 @@
 import pandas as pd  # pylint: disable=C0114
-from .utils.json_handler import dump_json
+from scripts.utils.json_handler import dump_json
 
 
-def csv2coco_json(coco_info,
-                  coco_licenses,
-                  coco_df=None,
-                  csv_fpath=None,
-                  save_fpath=None):
-    """Generate COCO style json from csv(Pandas.DataFrame)
+def coco_csv2json(coco_info, coco_df=None, csv_fpath=None, save_fpath=None):
+    """Generate COCO style json from csv(Pandas.DataFrame).
 
     Csv columns:
         image_id (int)
         width (int)
         height (int)
         file_name (str)
-        license_id (int)
-        #flickr_url # TODO: delete
-        #coco_url # TODO: delete
         date_captured (datetime)
         ann_id (int)
         segmentation ([polygon])
@@ -28,29 +21,26 @@ def csv2coco_json(coco_info,
         supercategory (str)
 
     Args:
-        coco_df (Pandas.DataFrame): annotation in Pandas.DataFrame of annota
+        coco_df (Pandas.DataFrame): an annotation in Pandas.DataFrame of annota
         info (dict): COCO style information of the annotation
-        licenses (list): COCO style lincenses of the annotation
-        csv_fpath (:None:`str`, optional): path of annotation csv file
+        csv_fpath (:None:`str`, optional): path for annotation csv file
             where to load. Defaults to None.
-        save_fpath (:None:`str`, optional): path of annotation json file
+        save_fpath (:None:`str`, optional): path for annotation json file
             where to save. Defaults to None.
 
     Returns:
         dict: COCO style json
     """
     assert coco_df is not None or csv_fpath is not None, \
-        "Either of coco_df and csv_fpath must not be none."
+        "coco_df or csv_fpath must not be None."
     if csv_fpath is not None:
         coco_df = pd.read_csv(csv_fpath)
-    print(coco_df.columns)
 
     coco_df.astype({
         "image_id": "int32",
         "width": "int32",
         "height": "int32",
         "file_name": "str",
-        "license_id": "int32",
         "date_captured": "str",
         "ann_id": "int32",
         "segmentation": "str",
@@ -66,14 +56,10 @@ def csv2coco_json(coco_info,
     coco_df["bbox"] = coco_df["bbox"].apply(lambda x: eval(x))  # pylint: disable=W0108
 
     image_coco_df = coco_df[[
-        "image_id", "width", "height", "file_name", "license_id",
-        "date_captured"
+        "image_id", "width", "height", "file_name", "date_captured"
     ]].copy()
     image_coco_df = image_coco_df.sort_values(["image_id"])
-    image_coco_df = image_coco_df.rename(columns={
-        "image_id": "id",
-        "license_id": "license"
-    })
+    image_coco_df = image_coco_df.rename(columns={"image_id": "id"})
 
     images = list(image_coco_df.to_dict("index").values())
 
@@ -99,7 +85,6 @@ def csv2coco_json(coco_info,
 
     coco_format = {
         "info": coco_info,
-        "licenses": coco_licenses,
         "images": images,
         "annotations": annotations,
         "categories": categories,
@@ -108,10 +93,3 @@ def csv2coco_json(coco_info,
         dump_json(save_fpath, coco_format)
 
     return coco_format
-
-
-if __name__ == "__main__":
-    info = {}
-    licenses = []
-
-    csv2coco_json(info, licenses, csv_fpath="", save_fpath="")

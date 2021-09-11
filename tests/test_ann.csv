@@ -1,3 +1,0 @@
-image_id,width,height,file_name,license_id,date_captured,ann_id,segmentation,area,bbox,iscrowd,category_id,category_name,supercategory
-1,320,480,"test1.jpg",0,"2021-09-13",0,"[[0,1,2,3,4],[2,3,4,5]]",590.0,"[0,0,100,150]",0,4,"test_category1","test_supercategory1"
-2,320,480,"test2.jpg",0,"2021-09-14",1,"[[0,1,2,3,4],[2,3,4,6]]",590.0,"[0,0,100,160]",0,5,"test_category2","test_supercategory2"
