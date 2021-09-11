@@ -2,29 +2,29 @@ import json
 
 
 def dump_json(save_fpath, data):
-    """Dump json
+    """Dump json.
 
     Args:
-        save_fpath (str): [description]
-        data (dict): [description]
+        save_fpath (str): json file path to dump data
+        data (dict): data to dump
     """
 
-    with open(save_fpath, "w") as dump_json:
-        json.dump(data, dump_json)
+    with open(save_fpath, "w") as write_f:
+        json.dump(data, write_f)
     print(f"json has been dumped : {save_fpath}")
 
 
 def load_json(load_fpath):
-    """Load json
+    """Load json.
 
     Args:
-        load_fpath (str): [description]
+        load_fpath (str): json file path to load
 
     Returns:
-        dict: [description]
+        dict: json data
     """
 
-    with open(load_fpath, "r") as load_json:
-        data = json.load(load_json)
+    with open(load_fpath, "r") as read_f:
+        data = json.load(read_f)
     print(f"json has been loaded : {load_fpath}")
     return data
